@@ -1,4 +1,4 @@
-#**Table of Contents**
+# Table of Contents
 
 [News Scrapper](https://github.com/MuzaffarSoliyev/spotlightdigital/blob/main/Uznews%20scrapper.ipynb)
 
