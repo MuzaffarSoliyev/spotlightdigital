@@ -2,12 +2,13 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import pandas as pd
 import torch
 from tqdm.auto import tqdm
+from detoxify import Detoxify
 tqdm.pandas()
 
 
 device = torch.device('cuda')
 
-df = pd.read_csv("proissestviya_toxic.csv")
+df = pd.read_csv("kriminal_toxic_eng.csv")
 # naznaceniya = pd.read_csv("content/naznaceniya_toxic.csv")
 # obshhestvo = pd.read_csv("content/obshhestvo_toxic.csv")
 # proissestviya = pd.read_csv("content/proissestviya_toxic.csv")
@@ -25,7 +26,23 @@ def translate(text):
     decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return decoded
 
+model = Detoxify('original')
+
+def toxicity(text):
+    results = model.predict(text)['toxicity']
+    return results
+
+
 
 df['eng_title'] = df.progress_apply(lambda row: translate(row['title']), axis=1)
 df['eng_comments'] = df.progress_apply(lambda row: translate(row['comments']), axis=1)
-df.to_csv('proissestviya_toxic_eng.csv')
+df_women = df.loc[(df['masc'] == 0) & (df['fem'] > 0)]
+df_men = df.loc[(df['masc'] > 0) & (df['fem'] == 0)]
+
+
+df_women['toxicity'] = df_women.progress_apply(lambda row: toxicity(row['eng_comments']), axis=1)
+df_men['toxicity'] = df_men.progress_apply(lambda row: toxicity(row['eng_comments']), axis=1)
+print(f"women tox: {df_women['toxicity'].mean()}")
+print(f"men tox: {df_men['toxicity'].mean()}")
+
+df.to_csv('kriminal_toxic_eng.csv')
